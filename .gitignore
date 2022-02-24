@@ -1,0 +1,7 @@
+*.pdf
+*.token
+*.test
+*.solution
+*.xml
+*.lay
+*/.idea

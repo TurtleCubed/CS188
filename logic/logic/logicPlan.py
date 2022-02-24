@@ -363,13 +363,16 @@ def checkLocationSatisfiability(x1_y1: Tuple[int, int], x0_y0: Tuple[int, int], 
     KB.append(conjoin(map_sent))
 
     "*** BEGIN YOUR CODE HERE ***"
-    axioms = pacphysicsAxioms(0, all_coords, non_outer_wall_coords,
-                              walls_grid=walls_grid, sensorModel=None, successorAxioms=allLegalSuccessorAxioms)
+    axioms0 = pacphysicsAxioms(0, all_coords, non_outer_wall_coords,
+                               walls_grid=walls_grid, sensorModel=None, successorAxioms=allLegalSuccessorAxioms)
+    axioms1 = pacphysicsAxioms(1, all_coords, non_outer_wall_coords,
+                               walls_grid=walls_grid, sensorModel=None, successorAxioms=allLegalSuccessorAxioms)
     current = PropSymbolExpr(pacman_str, x0, y0, time=0)
     x1y1 = PropSymbolExpr(pacman_str, x1, y1, time=1)
-    act0 = PropSymbolExpr(action0, time=1)
+    act0 = PropSymbolExpr(action0, time=0)
     act1 = PropSymbolExpr(action1, time=1)
-    KB.append(axioms)
+    KB.append(axioms0)
+    KB.append(axioms1)
     KB.append(current)
     KB.append(act0)
     KB.append(act1)
