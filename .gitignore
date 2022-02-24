@@ -1,7 +1,8 @@
-*.pdf
-*.token
-*.test
-*.solution
-*.xml
-*.lay
-*/.idea
+
+*
+!*/
+
+!*.py
+!.gitignore
+
+*/__pycache__

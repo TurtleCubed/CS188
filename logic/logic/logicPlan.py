@@ -411,7 +411,29 @@ def positionLogicPlan(problem) -> List:
     KB = []
 
     "*** BEGIN YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    initLoc = PropSymbolExpr(pacman_str, x0, y0, time=0)
+    KB.append(initLoc)
+    for t in range(50):
+        print("time = ", t)
+        posLoc: List[Expr] = []
+        for (x, y) in non_wall_coords:
+            posLoc.append(PropSymbolExpr(pacman_str, x, y, time=t))
+        KB.append(exactlyOne(posLoc))
+        goal = PropSymbolExpr(pacman_str, xg, yg, time=t)
+        acts: List[Expr] = []
+        for act in actions:
+            acts.append(PropSymbolExpr(act, time=t))
+        KB.append(exactlyOne(acts))
+
+        if t > 0:
+            for (x, y) in non_wall_coords:
+                KB.append(pacmanSuccessorAxiomSingle(x, y, time=t, walls_grid=walls_grid))
+
+        model = findModel(conjoin(KB) & goal)
+        if model:
+            plan = extractActionSequence(model, actions)
+            return plan
+
     "*** END YOUR CODE HERE ***"
 
 #______________________________________________________________________________
