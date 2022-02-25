@@ -514,14 +514,47 @@ def localization(problem, agent) -> Generator:
 
     KB = []
 
-    "*** BEGIN YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    "* BEGIN YOUR CODE HERE *"
+    # add where there are walls
+    for (x,y) in walls_list:
+        KB.append(PropSymbolExpr(wall_str, x, y))
+    # and arent:
+    for (x,y) in all_coords:
+        if (x,y) not in walls_list:
+            KB.append(~PropSymbolExpr(wall_str, x, y))
 
     for t in range(agent.num_timesteps):
-        "*** END YOUR CODE HERE ***"
+        # (1)
+        # 1.1 pacphysics
+        KB.append(pacphysicsAxioms(t, all_coords, non_outer_wall_coords, walls_grid, sensorModel=sensorAxioms,
+                                   successorAxioms=allLegalSuccessorAxioms))
+        # 1.2 action
+        action_t = agent.actions[t]
+        KB.append(PropSymbolExpr(action_t, time=t))
+        # 1.3 percept
+        KB.append(fourBitPerceptRules(t, agent.getPercepts()))
+
+        # (2) find possible locations
+        possible_locations = []
+        for (x,y) in non_outer_wall_coords:
+            pos = PropSymbolExpr(pacman_str, x, y, time=t)
+            in_pos = entails(conjoin(KB), pos)
+            not_in_pos = entails(conjoin(KB), ~pos)
+            # might not be able to prove that it is in the position not that it is not
+            if in_pos:
+                KB.append(pos)
+                possible_locations.append((x,y))
+            elif not_in_pos:
+                KB.append(~pos)
+            else:
+                possible_locations.append((x,y))
+
+        # (3)
+        agent.moveToNextState(action_t)
+        "* END YOUR CODE HERE *"
         yield possible_locations
 
-#______________________________________________________________________________
+#
 # QUESTION 7
 
 def mapping(problem, agent) -> Generator:
@@ -547,9 +580,42 @@ def mapping(problem, agent) -> Generator:
     KB.append(conjoin(outer_wall_sent))
 
     "*** BEGIN YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    # Get initial location
+    initpos = PropSymbolExpr(pacman_str, pac_x_0, pac_y_0, time=0)
+    KB.append(initpos)
+    # Also add whether there is a wall at that location.
+    wallatstart = PropSymbolExpr(wall_str, pac_x_0, pac_y_0)
+    KB.append(~wallatstart)
 
     for t in range(agent.num_timesteps):
+        # Add to KB: pacphysics_axioms(...), which you wrote in q3.
+        # Use sensorAxioms and allLegalSuccessorAxioms for localization and mapping
+        KB.append(pacphysicsAxioms(t, all_coords, non_outer_wall_coords, walls_grid=known_map,
+                                   sensorModel=sensorAxioms, successorAxioms=allLegalSuccessorAxioms))
+
+        # Add to KB: Pacman takes action prescribed by agent.actions[t]
+        KB.append(PropSymbolExpr(agent.actions[t], time=t))
+
+        # Get the percepts by calling agent.getPercepts() and pass the percepts to fourBitPerceptRules(...)
+        # for localization and mapping. Add the resulting percept rules to KB.
+        percepts = agent.getPercepts()
+        perceptsrules = fourBitPerceptRules(t, percepts)
+        KB.append(perceptsrules)
+
+        # Can we prove whether a wall is at (x, y)? Can we prove whether a wall is not at (x, y)? Use entails and the KB.
+        for (x, y) in non_outer_wall_coords:
+            wallhere = PropSymbolExpr(wall_str, x, y)
+            # Add to KB and update known_map: (x, y) locations where there is provably a wall.
+            if entails(conjoin(KB), wallhere):
+                KB.append(wallhere)
+                known_map[x][y] = 1
+            # Add to KB and update known_map: (x, y) locations where there is provably not a wall.
+            if entails(conjoin(KB), ~wallhere):
+                KB.append(~wallhere)
+                known_map[x][y] = 0
+
+        # Call agent.moveToNextState(action_t) on the current agent action at timestep t.
+        agent.moveToNextState(agent.actions[t])
         "*** END YOUR CODE HERE ***"
         yield known_map
 
