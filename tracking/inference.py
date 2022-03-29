@@ -67,8 +67,8 @@ def constructBayesNet(gameState: hunters.GameState):
     variableDomainsDict[PAC] = posPositions
     variableDomainsDict[GHOST0] = posPositions
     variableDomainsDict[GHOST1] = posPositions
-    variableDomainsDict[OBS0] = list(range(0, X_RANGE + Y_RANGE + MAX_NOISE-1))
-    variableDomainsDict[OBS1] = list(range(0, X_RANGE + Y_RANGE + MAX_NOISE-1))
+    variableDomainsDict[OBS0] = list(range(0, X_RANGE + Y_RANGE + MAX_NOISE - 1))
+    variableDomainsDict[OBS1] = list(range(0, X_RANGE + Y_RANGE + MAX_NOISE - 1))
 
     net = bn.constructEmptyBayesNet(variables, edges, variableDomainsDict)
     return net
