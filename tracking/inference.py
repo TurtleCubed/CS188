@@ -12,6 +12,7 @@
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
 
 
+from curses import keyname
 import random
 import itertools
 from typing import List, Dict, Tuple
@@ -329,7 +330,11 @@ class DiscreteDistribution(dict):
         {}
         """
         "*** YOUR CODE HERE ***"
-        raiseNotDefined()
+        if self:  
+            total = self.total()
+            for key, value in self.items():
+                self[key] = value/total
+        return
         "*** END YOUR CODE HERE ***"
 
     def sample(self):
@@ -354,7 +359,14 @@ class DiscreteDistribution(dict):
         0.0
         """
         "*** YOUR CODE HERE ***"
-        raiseNotDefined()
+        smp = random.random() * self.total()
+        lower_lim = 0
+        upper_lim = 0
+        for k in self.keys():
+            lower_lim = upper_lim
+            upper_lim = lower_lim + self[k]
+            if smp > lower_lim and smp < upper_lim: #sample is between the limits
+                return k
         "*** END YOUR CODE HERE ***"
 
 
