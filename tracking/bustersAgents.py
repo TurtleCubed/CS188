@@ -12,6 +12,7 @@
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
 
 
+from importlib_metadata import distribution
 import util
 from util import raiseNotDefined
 from game import Agent
@@ -136,7 +137,7 @@ class GreedyBustersAgent(BustersAgent):
     ########### QUESTION 8  ###########
     ########### ########### ###########
 
-    def chooseAction(self, gameState: busters.GameState):
+    def chooseAction(self, gameState: busters.GameState):   
         """
         First computes the most likely position of each ghost that has
         not yet been captured, then chooses an action that brings
@@ -149,5 +150,9 @@ class GreedyBustersAgent(BustersAgent):
             [beliefs for i, beliefs in enumerate(self.ghostBeliefs)
              if livingGhosts[i+1]]
         "*** YOUR CODE HERE ***"
-        raiseNotDefined()
+        mostLikelyGhostPos = [distribution.argMax() for distribution in livingGhostPositionDistributions]
+        closestGhost = min(mostLikelyGhostPos, key=lambda ghostPos: abs(self.distancer.getDistance(pacmanPosition, ghostPos)))
+        pacmanSuccessors = {action: Actions.getSuccessor(pacmanPosition, action) for action in legal}
+        action = min(legal, key=lambda action: self.distancer.getDistance(closestGhost, pacmanSuccessors[action]))
+        return action
         "*** END YOUR CODE HERE ***"
