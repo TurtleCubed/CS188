@@ -330,7 +330,7 @@ class DiscreteDistribution(dict):
         {}
         """
         "*** YOUR CODE HERE ***"
-        if self:  
+        if self and self.total() != 0:  
             total = self.total()
             for key, value in self.items():
                 self[key] = value/total
@@ -447,9 +447,10 @@ class InferenceModule:
                 return 1
             else:
                 return 0
-        if noisyDistance:
+        elif noisyDistance is not None:
             return busters.getObservationProbability(noisyDistance, trueDistance)
-        return 0
+        else:
+            return 0
         "*** END YOUR CODE HERE ***"
 
     def setGhostPosition(self, gameState, ghostPosition, index):
@@ -562,7 +563,10 @@ class ExactInference(InferenceModule):
         position is known.
         """
         "*** YOUR CODE HERE ***"
-        raiseNotDefined()
+        pacmanPosition = gameState.getPacmanPosition()
+        jailPosition = self.getJailPosition()
+        for ghostPosition in self.allPositions:
+            self.beliefs[ghostPosition] *= self.getObservationProb(observation, pacmanPosition, ghostPosition, jailPosition)
         "*** END YOUR CODE HERE ***"
         self.beliefs.normalize()
     
