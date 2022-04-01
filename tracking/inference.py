@@ -698,7 +698,6 @@ class ParticleFilter(InferenceModule):
             weights.sample()
             for i in range(self.numParticles):
                 self.particles[i] = weights.sample()
-        
 
         "*** END YOUR CODE HERE ***"
     
@@ -712,5 +711,10 @@ class ParticleFilter(InferenceModule):
         gameState.
         """
         "*** YOUR CODE HERE ***"
-        raiseNotDefined()
+        
+        # get position ditributions
+        for i in range(self.numParticles):
+            newPosDist = self.getPositionDistribution(gameState, self.particles[i])
+            self.particles[i] = newPosDist.sample()
         "*** END YOUR CODE HERE ***"
+        
