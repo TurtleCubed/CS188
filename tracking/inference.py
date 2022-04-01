@@ -680,28 +680,26 @@ class ParticleFilter(InferenceModule):
         the DiscreteDistribution may be useful.
         """
         "*** YOUR CODE HERE ***"
-        newParticles = []
-        newBeliefs = DiscreteDistribution()
         pacmanPosition = gameState.getPacmanPosition()
         jailPosition = self.getJailPosition()
-        beliefs = self.getBeliefDistribution()
+        weights = DiscreteDistribution()
 
-        allZero = True
-        sum = 0
-        for ghostPosition in self.allPositions:
-            p = self.getObservationProb(observation, pacmanPosition, ghostPosition, jailPosition)
-            beliefs[ghostPosition] = p
-            if p > 0:
-                allZero = False
-            sum += p
+        # Calculate the weights of all particles.
+        for particle in self.particles:
+            weights[particle] += self.getObservationProb(observation, pacmanPosition, particle, jailPosition)
+        
+        
+        # If the sum of all weights across all states is 0, reinitialize all particles.
+        # Else, normalize the distribution of total weights over states and resample
+        if weights.total() == 0: 
+            self.initializeUniformly(gameState)
+        else:
+            weights.normalize()
+            weights.sample()
+            for i in range(self.numParticles):
+                self.particles[i] = weights.sample()
+        
 
-        for ghostPosition in self.allPositions:
-            newBeliefs[ghostPosition] = beliefs[ghostPosition]/sum
-
-        for i in range(self.numParticles):
-            newParticles.append(beliefs.sample())
-
-        self.particles = newParticles
         "*** END YOUR CODE HERE ***"
     
     ########### ########### ###########
