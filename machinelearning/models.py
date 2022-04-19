@@ -66,15 +66,36 @@ class RegressionModel(object):
     def __init__(self):
         # Initialize your model parameters here
         "*** YOUR CODE HERE ***"
-        self.LR = -0.05
-        self.BS = 4
-        self.HLS = 30
-        self.w1 = nn.Parameter(1, self.HLS)
-        self.b1 = nn.Parameter(1, self.HLS)
-        self.w2 = nn.Parameter(self.HLS, self.HLS)
-        self.b2 = nn.Parameter(1, self.HLS)
-        self.w3 = nn.Parameter(self.HLS, 1)
-        self.b3 = nn.Parameter(1, 1)
+        self.learningRate = -0.05 # recommended between -0.001 and -1.0
+        self.batchSize = 4 # should be divisible by 200
+        self.hiddenLayerSize = 30 #
+        self.numHiddenLayers = 2 # number of non-linearities
+
+        self.inputSize = 1
+        self.outputSize = 1
+        if self.numHiddenLayers == 1:
+            self.w1 = nn.Parameter(self.inputSize, self.hiddenLayerSize)
+            self.b1 = nn.Parameter(1, self.hiddenLayerSize)
+            self.w2 = nn.Parameter(self.hiddenLayerSize, self.outputSize)
+            self.b2 = nn.Parameter(1, self.outputSize)
+        elif self.numHiddenLayers == 2:
+            self.w1 = nn.Parameter(self.inputSize, self.hiddenLayerSize)
+            self.b1 = nn.Parameter(1, self.hiddenLayerSize)
+            self.w2 = nn.Parameter(self.hiddenLayerSize, self.hiddenLayerSize)
+            self.b2 = nn.Parameter(1, self.hiddenLayerSize)
+            self.w3 = nn.Parameter(self.hiddenLayerSize, self.outputSize)
+            self.b3 = nn.Parameter(1, self.outputSize)
+        elif self.numHiddenLayers == 3:
+            self.w1 = nn.Parameter(self.inputSize, self.hiddenLayerSize)
+            self.b1 = nn.Parameter(1, self.hiddenLayerSize)
+            self.w2 = nn.Parameter(self.hiddenLayerSize, self.hiddenLayerSize)
+            self.b2 = nn.Parameter(1, self.hiddenLayerSize)
+            self.w3 = nn.Parameter(self.hiddenLayerSize, self.hiddenLayerSize)
+            self.b3 = nn.Parameter(1, self.hiddenLayerSize)
+            self.w4 = nn.Parameter(self.hiddenLayerSize, self.outputSize)
+            self.b4 = nn.Parameter(1, self.outputSize)
+        else:
+            raise ValueError("invalid hidden layer size")
 
     def run(self, x):
         """
@@ -89,15 +110,22 @@ class RegressionModel(object):
         product1 = nn.Linear(x, self.w1)
         sum1 = nn.AddBias(product1, self.b1)
         y1 = nn.ReLU(sum1)
-
         product2 = nn.Linear(y1, self.w2)
         sum2 = nn.AddBias(product2, self.b2)
-        y2 = nn.ReLU(sum2)
+        if self.numHiddenLayers == 1:
+            return sum2
 
+        y2 = nn.ReLU(sum2)
         product3 = nn.Linear(y2, self.w3)
         sum3 = nn.AddBias(product3, self.b3)
+        if self.numHiddenLayers == 2:
+            return sum3
 
-        return sum3
+        y3 = nn.ReLU(sum3)
+        product4 = nn.Linear(y3, self.w4)
+        sum4 = nn.AddBias(product4, self.b4)
+        if self.numHiddenLayers == 3:
+            return sum4
 
     def get_loss(self, x, y):
         """
@@ -118,16 +146,28 @@ class RegressionModel(object):
         Trains the model.
         """
         "*** YOUR CODE HERE ***"
+        if self.numHiddenLayers == 1:
+            params = [self.w1, self.b1, self.w2, self.b2]
+        elif self.numHiddenLayers == 2:
+            params = [self.w1, self.b1, self.w2, self.b2, self.w3, self.b3]
+        else:
+            params = [self.w1, self.b1, self.w2, self.b2, self.w3, self.b3, self.w4, self.b4]
+
         for i in range(50):
-            for x, y in dataset.iterate_once(self.BS):
+            for x, y in dataset.iterate_once(self.batchSize):
                 loss = self.get_loss(x, y)
-                grad = nn.gradients(loss, [self.w1, self.b1, self.w2, self.b2, self.w3, self.b3])
-                self.w1.update(grad[0], self.LR)
-                self.b1.update(grad[1], self.LR)
-                self.w2.update(grad[2], self.LR)
-                self.b2.update(grad[3], self.LR)
-                self.w3.update(grad[4], self.LR)
-                self.b3.update(grad[5], self.LR)
+                grad = nn.gradients(loss, params)
+                self.w1.update(grad[0], self.learningRate)
+                self.b1.update(grad[1], self.learningRate)
+                self.w2.update(grad[2], self.learningRate)
+                self.b2.update(grad[3], self.learningRate)
+                if self.numHiddenLayers >= 2:
+                    self.w3.update(grad[4], self.learningRate)
+                    self.b3.update(grad[5], self.learningRate)
+                if self.numHiddenLayers >= 3:
+                    self.w4.update(grad[6], self.learningRate)
+                    self.b4.update(grad[7], self.learningRate)
+
 
 class DigitClassificationModel(object):
     """
@@ -143,9 +183,40 @@ class DigitClassificationModel(object):
     methods here. We recommend that you implement the RegressionModel before
     working on this part of the project.)
     """
+
     def __init__(self):
         # Initialize your model parameters here
         "*** YOUR CODE HERE ***"
+        self.learningRate = -0.1  # recommended between -0.001 and -1.0
+        self.batchSize = 40  # should be divisible by 200
+        self.hiddenLayerSize = 100
+        self.numHiddenLayers = 2  # number of non-linearities
+
+        self.inputSize = 784
+        self.outputSize = 10
+        if self.numHiddenLayers == 1:
+            self.w1 = nn.Parameter(self.inputSize, self.hiddenLayerSize)
+            self.b1 = nn.Parameter(1, self.hiddenLayerSize)
+            self.w2 = nn.Parameter(self.hiddenLayerSize, self.outputSize)
+            self.b2 = nn.Parameter(1, self.outputSize)
+        elif self.numHiddenLayers == 2:
+            self.w1 = nn.Parameter(self.inputSize, self.hiddenLayerSize)
+            self.b1 = nn.Parameter(1, self.hiddenLayerSize)
+            self.w2 = nn.Parameter(self.hiddenLayerSize, self.hiddenLayerSize)
+            self.b2 = nn.Parameter(1, self.hiddenLayerSize)
+            self.w3 = nn.Parameter(self.hiddenLayerSize, self.outputSize)
+            self.b3 = nn.Parameter(1, self.outputSize)
+        elif self.numHiddenLayers == 3:
+            self.w1 = nn.Parameter(self.inputSize, self.hiddenLayerSize)
+            self.b1 = nn.Parameter(1, self.hiddenLayerSize)
+            self.w2 = nn.Parameter(self.hiddenLayerSize, self.hiddenLayerSize)
+            self.b2 = nn.Parameter(1, self.hiddenLayerSize)
+            self.w3 = nn.Parameter(self.hiddenLayerSize, self.hiddenLayerSize)
+            self.b3 = nn.Parameter(1, self.hiddenLayerSize)
+            self.w4 = nn.Parameter(self.hiddenLayerSize, self.outputSize)
+            self.b4 = nn.Parameter(1, self.outputSize)
+        else:
+            raise ValueError("invalid hidden layer size")
 
     def run(self, x):
         """
@@ -162,6 +233,25 @@ class DigitClassificationModel(object):
                 (also called logits)
         """
         "*** YOUR CODE HERE ***"
+        product1 = nn.Linear(x, self.w1)
+        sum1 = nn.AddBias(product1, self.b1)
+        y1 = nn.ReLU(sum1)
+        product2 = nn.Linear(y1, self.w2)
+        sum2 = nn.AddBias(product2, self.b2)
+        if self.numHiddenLayers == 1:
+            return sum2
+
+        y2 = nn.ReLU(sum2)
+        product3 = nn.Linear(y2, self.w3)
+        sum3 = nn.AddBias(product3, self.b3)
+        if self.numHiddenLayers == 2:
+            return sum3
+
+        y3 = nn.ReLU(sum3)
+        product4 = nn.Linear(y3, self.w4)
+        sum4 = nn.AddBias(product4, self.b4)
+        if self.numHiddenLayers == 3:
+            return sum4
 
     def get_loss(self, x, y):
         """
@@ -177,12 +267,35 @@ class DigitClassificationModel(object):
         Returns: a loss node
         """
         "*** YOUR CODE HERE ***"
+        return nn.SoftmaxLoss(self.run(x), y)
 
     def train(self, dataset):
         """
         Trains the model.
         """
         "*** YOUR CODE HERE ***"
+        if self.numHiddenLayers == 1:
+            params = [self.w1, self.b1, self.w2, self.b2]
+        elif self.numHiddenLayers == 2:
+            params = [self.w1, self.b1, self.w2, self.b2, self.w3, self.b3]
+        else:
+            params = [self.w1, self.b1, self.w2, self.b2, self.w3, self.b3, self.w4, self.b4]
+
+        for x, y in dataset.iterate_forever(self.batchSize):
+            loss = self.get_loss(x, y)
+            grad = nn.gradients(loss, params)
+            self.w1.update(grad[0], self.learningRate)
+            self.b1.update(grad[1], self.learningRate)
+            self.w2.update(grad[2], self.learningRate)
+            self.b2.update(grad[3], self.learningRate)
+            if self.numHiddenLayers >= 2:
+                self.w3.update(grad[4], self.learningRate)
+                self.b3.update(grad[5], self.learningRate)
+            if self.numHiddenLayers >= 3:
+                self.w4.update(grad[6], self.learningRate)
+                self.b4.update(grad[7], self.learningRate)
+            if dataset.get_validation_accuracy() > 0.98:
+                break
 
 class LanguageIDModel(object):
     """
