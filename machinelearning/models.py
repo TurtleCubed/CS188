@@ -153,7 +153,7 @@ class RegressionModel(object):
         else:
             params = [self.w1, self.b1, self.w2, self.b2, self.w3, self.b3, self.w4, self.b4]
 
-        for i in range(50):
+        for i in range(500):
             for x, y in dataset.iterate_once(self.batchSize):
                 loss = self.get_loss(x, y)
                 grad = nn.gradients(loss, params)
@@ -294,7 +294,7 @@ class DigitClassificationModel(object):
             if self.numHiddenLayers >= 3:
                 self.w4.update(grad[6], self.learningRate)
                 self.b4.update(grad[7], self.learningRate)
-            if dataset.get_validation_accuracy() > 0.98:
+            if dataset.get_validation_accuracy() > 0.977:
                 break
 
 class LanguageIDModel(object):
@@ -315,6 +315,14 @@ class LanguageIDModel(object):
 
         # Initialize your model parameters here
         "*** YOUR CODE HERE ***"
+        self.batchSize = 10
+        self.learningRate = -0.02
+        self.hiddenLayerSize = 30
+        self.wx = nn.Parameter(self.num_chars, self.hiddenLayerSize)
+        self.b = nn.Parameter(1, self.hiddenLayerSize)
+        self.wh = nn.Parameter(self.hiddenLayerSize, self.hiddenLayerSize)
+        self.ws = nn.Parameter(self.hiddenLayerSize, 5)
+
 
     def run(self, xs):
         """
@@ -346,6 +354,10 @@ class LanguageIDModel(object):
                 (also called logits)
         """
         "*** YOUR CODE HERE ***"
+        h = nn.AddBias(nn.ReLU(nn.Linear(xs[0], self.wx)), self.b)
+        for i in range(1, len(xs)):
+            h = nn.AddBias(nn.ReLU(nn.Add(nn.Linear(xs[i], self.wx), nn.Linear(h, self.wh))), self.b)
+        return nn.Linear(h, self.ws)
 
     def get_loss(self, xs, y):
         """
@@ -362,9 +374,20 @@ class LanguageIDModel(object):
         Returns: a loss node
         """
         "*** YOUR CODE HERE ***"
+        return nn.SoftmaxLoss(self.run(xs), y)
 
     def train(self, dataset):
         """
         Trains the model.
         """
         "*** YOUR CODE HERE ***"
+        for x, y in dataset.iterate_forever(self.batchSize):
+            loss = self.get_loss(x, y)
+            params = [self.wx, self.wh, self.ws, self.b]
+            grads = nn.gradients(loss, params)
+            self.wx.update(grads[0], self.learningRate)
+            self.wh.update(grads[1], self.learningRate)
+            self.ws.update(grads[2], self.learningRate)
+            self.b.update(grads[3], self.learningRate)
+            if dataset.get_validation_accuracy() >= 0.87:
+                break
